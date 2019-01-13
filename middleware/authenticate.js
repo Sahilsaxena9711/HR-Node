@@ -10,7 +10,7 @@ var authenticate = (req, res, next) => {
         req.token = token;
         next();
     }).catch((e) => {
-        res.status(401).send({
+        res.status(200).send({
             data: null,
             code: 4010,
             error: 'UnAuthorized Token'
