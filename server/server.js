@@ -31,14 +31,14 @@ app.get('/user/all', authenticate, (req, res) => {
                 error: null
             });
         }).catch((e) => {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: e.message
             });
         })
     } else {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: "This request can only be made by HR"
@@ -61,7 +61,7 @@ app.post('/user', (req, res) => {
             error: null
         });
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -75,14 +75,14 @@ app.get('/user/verify/:token', pathAuth, (req, res) => {
         user.save().then((user) => {
             res.status(200).send("Verified successfully, Please login now!");
         }).catch((e) => {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: e.message
             });
         })
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -108,14 +108,14 @@ app.post('/user/login', (req, res) => {
                 error: null
             });
         }else{
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: "Please verify your email first"
             });    
         }
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: "Invalid Username or Password"
@@ -143,7 +143,7 @@ app.post('/attendance', authenticate, (req, res) => {
                     error: null
                 });
             }).catch((e) => {
-                res.status(400).send({
+                res.status(200).send({
                     data: null,
                     code: 4000,
                     error: e.message
@@ -164,7 +164,7 @@ app.post('/attendance', authenticate, (req, res) => {
                     error: null
                 });
             }).catch((e) => {
-                res.status(400).send({
+                res.status(200).send({
                     data: null,
                     code: 4000,
                     error: e.message
@@ -173,7 +173,7 @@ app.post('/attendance', authenticate, (req, res) => {
 
         }
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -191,7 +191,7 @@ app.get('/attendance/:month', authenticate, (req, res) => {
             error: null
         });
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -210,14 +210,14 @@ app.get('/attendance/username/:username/date/:date', authenticate, (req, res) =>
                 error: null
             });
         }).catch((e) => {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: e.message
             });
         });
     } else {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: "This request can only be made by HR"
@@ -235,7 +235,7 @@ app.get('/attendance/date/:date', authenticate, (req, res) => {
             error: null
         });
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -263,21 +263,21 @@ app.post('/leave/apply', authenticate, (req, res) => {
                     error: null
                 });
             }).catch((e) => {
-                res.status(400).send({
+                res.status(200).send({
                     data: null,
                     code: 4000,
                     error: e.message
                 });
             });
         } else {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: `You have already applied leave for ${body.date}`
             });
         }
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -288,7 +288,7 @@ app.post('/leave/apply', authenticate, (req, res) => {
 app.get('/leave/delete/:id', authenticate, (req, res) => {
     Leave.findOneAndDelete({ _id: req.params.id }).then((leave) => {
         if (!leave) {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: "No leaves found"
@@ -302,7 +302,7 @@ app.get('/leave/delete/:id', authenticate, (req, res) => {
         }
 
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -319,14 +319,14 @@ app.get('/leave/all', authenticate, (req, res) => {
                 error: null
             })
         }).catch((e) => {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: e.message
             });
         })
     } else {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: "This request can only be made by HR"
@@ -342,7 +342,7 @@ app.get('/leave/my', authenticate, (req, res) => {
             error: null
         });
     }).catch((e) => {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: e.message
@@ -354,7 +354,7 @@ app.post('/leave/approve/:id', authenticate, (req, res) => {
     if (req.user.role == "HR") {
         Leave.findOne({ _id: req.params.id }).then((leave) => {
             if (!leave) {
-                res.status(400).send({
+                res.status(200).send({
                     data: null,
                     code: 4000,
                     error: "No leave found to delete"
@@ -368,7 +368,7 @@ app.post('/leave/approve/:id', authenticate, (req, res) => {
                         error: null
                     });
                 }).catch((e) => {
-                    res.status(400).send({
+                    res.status(200).send({
                         data: null,
                         code: 4000,
                         error: e.message
@@ -376,14 +376,14 @@ app.post('/leave/approve/:id', authenticate, (req, res) => {
                 })
             }
         }).catch((e) => {
-            res.status(400).send({
+            res.status(200).send({
                 data: null,
                 code: 4000,
                 error: e.message
             });
         });
     } else {
-        res.status(400).send({
+        res.status(200).send({
             data: null,
             code: 4000,
             error: "This request can only be made by HR"
