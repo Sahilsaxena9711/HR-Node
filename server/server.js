@@ -118,7 +118,7 @@ app.post('/user/login', (req, res) => {
         res.status(400).send({
             data: null,
             code: 4000,
-            error: e.message
+            error: "Invalid Username or Password"
         });
     })
 })
