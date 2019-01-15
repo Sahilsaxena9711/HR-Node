@@ -229,6 +229,13 @@ app.get('/attendance/date/:date', authenticate, (req, res) => {
     var date = req.params.date;
     var username = req.user.username
     Attendance.findOne({ date, username }).then((attendance) => {
+        if(!attendance){
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: `No attendance found for ${date}`
+            });    
+        }
         res.status(200).send({
             data: {data: attendance, message: "Request Completed Successfully"},
             code: 2000,
