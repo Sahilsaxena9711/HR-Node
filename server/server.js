@@ -53,7 +53,7 @@ app.post('/user', (req, res) => {
     user.save().then((user) => {
         return user.generateAuthToken();
     }).then(() => {
-        return mail(user.email, `http://localhost:8090/user/verify/${user.tokens[0].token}`, user.username);
+        return mail(user.email, `https://hrmsbackend.herokuapp.com/user/verify/${user.tokens[0].token}`, user.username);
     }).then(() => {
         res.status(200).send({
             data: { data: null, message: `Verificaion link has been sent to ${user.email}` },
@@ -262,7 +262,7 @@ app.post('/leave/apply', authenticate, (req, res) => {
             data.leaveType = body.leaveType;
             var lev = new Leave(data);
             lev.save().then((lev) => {
-                return mail('sahilsaxena9711@gmail.com', `localhost:8090/leave/approve/${lev._id}`);
+                return mail('sahilsaxena9711@gmail.com', `https://hrmsbackend.herokuapp.com/leave/approve/${lev._id}`);
             }).then(() => {
                 res.status(200).send({
                     data: {data: lev, message: "Request Completed Successfully"},
