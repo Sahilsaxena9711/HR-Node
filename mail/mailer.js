@@ -6,7 +6,7 @@ var mail = ((email, url, name) => {
         secure: true,
         auth: {
             user: 'sahilsaxena9711@gmail.com',
-            pass: 'Sahil1058'
+            pass: 'Sahil@1058'
         }
     });
     let mailOptions = {
