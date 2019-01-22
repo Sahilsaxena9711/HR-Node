@@ -12,6 +12,9 @@ var { mongoose } = require('./db/mongoose');
 var { msToHMS } = require('../util/hhmmss');
 var { milli } = require('../util/milliseconds');
 var { mail } = require('../mail/mailer');
+var { leavemail } = require('../mail/leaveMailer');
+var { regularizemail } = require('../mail/regularizeMailer');
+
 
 var app = express();
 
@@ -132,6 +135,7 @@ app.post('/attendance', authenticate, (req, res) => {
             data.date = body.date;
             data.entryTime = body.time;
             data.username = req.user.username;
+            data.approved = true
             if (milli(body.time) > 37800000) {
                 data.lateSwipeIn = msToHMS(milli(body.time) - 37800000);
             }
@@ -179,6 +183,78 @@ app.post('/attendance', authenticate, (req, res) => {
             error: e.message
         });
     })
+});
+
+
+app.post('/attendance/resularize', authenticate, (req, res) => {
+    var body = _.pick(req.body, ['_id', 'entryTime', 'date', 'exitTime', 'month']);
+    if(body._id != ""){
+        Attendance.findOne({_id: body._id}).then((attendance) => {
+            attendance.exitTime = body.exitTime;
+            attendance.totalTime = msToHMS(milli(body.exitTime) - milli(attendance.entryTime));
+            attendance.approved = false
+            if (32400000 > milli(body.exitTime) - milli(attendance.entryTime)) {
+                attendance.lessTime = msToHMS(32400000 - (milli(body.time) - milli(attendance.entryTime)));
+            } else {
+                attendance.overTime = msToHMS(milli(body.exitTime) - milli(attendance.entryTime) - 32400000);
+            }
+            attendance.save().then((attendance) => {
+                return regularizemail('sahilsaxena9711@gmail.com', attendance, body.date, req.user.username);
+            }).then(() => {
+                res.status(200).send({
+                    data: {data: null, message: "Request sent for regularization"},
+                    code: 2000,
+                    error: null
+                });
+            }).catch((e) => {
+                res.status(200).send({
+                    data: null,
+                    code: 4000,
+                    error: e.message
+                });
+            });        
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        })
+    } else{
+        let data = {}
+        data.entryTime = body.entryTime;
+        data.exitTime = body.exitTime;
+        data.username = req.user.username;
+        data.date = body.date;
+        data.month = body.month;
+        data.approved = false
+        data.totalTime = msToHMS(milli(data.exitTime) - milli(data.entryTime));
+        if (milli(data.entryTime) > 37800000) {
+            data.lateSwipeIn = msToHMS(milli(data.entryTime) - 37800000);
+        }
+        if (32400000 > milli(data.exitTime) - milli(data.entryTime)) {
+            data.lessTime = msToHMS(32400000 - (milli(data.exitTime) - milli(data.entryTime)));
+        } else {
+            data.overTime = msToHMS(milli(data.exitTime) - milli(data.entryTime) - 32400000);
+        }
+        var att = new Attendance(data);
+        att.save().then((att) => {
+            return regularizemail('sahilsaxena9711@gmail.com', data, body.date, req.user.username);
+        }).then(() => {
+            res.status(200).send({
+                data: { data: null, message: "Request sent for regularization"},
+                code: 2000,
+                error: null
+            })
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        });
+
+    }
 });
 
 app.get('/attendance/:month', authenticate, (req, res) => {
@@ -262,7 +338,7 @@ app.post('/leave/apply', authenticate, (req, res) => {
             data.leaveType = body.leaveType;
             var lev = new Leave(data);
             lev.save().then((lev) => {
-                return mail('sahilsaxena9711@gmail.com', `https://hrmsbackend.herokuapp.com/leave/approve/${lev._id}`);
+                return leavemail('sahilsaxena9711@gmail.com', `https://hrmsbackend.herokuapp.com/leave/approve/${lev._id}`, data);
             }).then(() => {
                 res.status(200).send({
                     data: {data: lev, message: "Request Completed Successfully"},

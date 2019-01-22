@@ -30,6 +30,10 @@ var AttendanceSchema = new mongoose.Schema({
     },
     totalTime: {
         type: String
+    },
+    approved: {
+        type: Boolean,
+        default: false
     }
 });
 
