@@ -194,7 +194,7 @@ app.post('/attendance/resularize', authenticate, (req, res) => {
             attendance.totalTime = msToHMS(milli(body.exitTime) - milli(attendance.entryTime));
             attendance.approved = false
             if (32400000 > milli(body.exitTime) - milli(attendance.entryTime)) {
-                attendance.lessTime = msToHMS(32400000 - (milli(body.time) - milli(attendance.entryTime)));
+                attendance.lessTime = msToHMS(32400000 - (milli(body.exitTime) - milli(attendance.entryTime)));
             } else {
                 attendance.overTime = msToHMS(milli(body.exitTime) - milli(attendance.entryTime) - 32400000);
             }
