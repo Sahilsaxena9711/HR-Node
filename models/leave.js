@@ -21,8 +21,8 @@ var LeaveSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    approved: {
-        type: Boolean,
+    status: {
+        type: String,
         default: false
     }
 });

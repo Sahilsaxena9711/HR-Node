@@ -22,6 +22,9 @@ const port = process.env.PORT;
 
 app.use(bodyparser.json());
 
+
+// USER API
+
 app.get('/user/all', authenticate, (req, res) => {
     if (req.user.role == "HR") {
         User.find().then((user) => {
@@ -126,6 +129,10 @@ app.post('/user/login', (req, res) => {
     })
 })
 
+
+// ATTENDANCE API
+
+
 app.post('/attendance', authenticate, (req, res) => {
     var body = _.pick(req.body, ['month', 'date', 'time']);
     Attendance.findOne({ date: body.date, username: req.user.username }).then((attendance) => {
@@ -135,7 +142,7 @@ app.post('/attendance', authenticate, (req, res) => {
             data.date = body.date;
             data.entryTime = body.time;
             data.username = req.user.username;
-            data.approved = true
+            data.status = "Approved"
             if (milli(body.time) > 37800000) {
                 data.lateSwipeIn = msToHMS(milli(body.time) - 37800000);
             }
@@ -186,13 +193,15 @@ app.post('/attendance', authenticate, (req, res) => {
 });
 
 
-app.post('/attendance/resularize', authenticate, (req, res) => {
+//REGULARIZE API
+
+app.post('/attendance/regularize', authenticate, (req, res) => {
     var body = _.pick(req.body, ['_id', 'entryTime', 'date', 'exitTime', 'month']);
     if(body._id != ""){
         Attendance.findOne({_id: body._id}).then((attendance) => {
             attendance.exitTime = body.exitTime;
             attendance.totalTime = msToHMS(milli(body.exitTime) - milli(attendance.entryTime));
-            attendance.approved = false
+            attendance.status = "Pending"
             if (32400000 > milli(body.exitTime) - milli(attendance.entryTime)) {
                 attendance.lessTime = msToHMS(32400000 - (milli(body.exitTime) - milli(attendance.entryTime)));
             } else {
@@ -227,7 +236,7 @@ app.post('/attendance/resularize', authenticate, (req, res) => {
         data.username = req.user.username;
         data.date = body.date;
         data.month = body.month;
-        data.approved = false
+        data.status = "Pending"
         data.totalTime = msToHMS(milli(data.exitTime) - milli(data.entryTime));
         if (milli(data.entryTime) > 37800000) {
             data.lateSwipeIn = msToHMS(milli(data.entryTime) - 37800000);
@@ -279,7 +288,7 @@ app.get('/attendance/username/:username/date/:date', authenticate, (req, res) =>
     if (req.user.role == "HR") {
         var date = req.params.date;
         var username = req.params.username
-        Attendance.findOne({ date, username }).then((attendance) => {
+        Attendance.findOne({ date, username, status: "Approved" }).then((attendance) => {
             res.status(200).send({
                 data: {data: attendance, message: "Request Completed Successfully"},
                 code: 2000,
@@ -304,7 +313,7 @@ app.get('/attendance/username/:username/date/:date', authenticate, (req, res) =>
 app.get('/attendance/date/:date', authenticate, (req, res) => {
     var date = req.params.date;
     var username = req.user.username
-    Attendance.findOne({ date, username }).then((attendance) => {
+    Attendance.findOne({ date, username, status: "Approved" }).then((attendance) => {
         if(!attendance){
             res.status(200).send({
                 data: null,
@@ -326,6 +335,134 @@ app.get('/attendance/date/:date', authenticate, (req, res) => {
     });
 });
 
+
+app.get('/attendance/regularize/all', authenticate, (req, res) => {
+    console.log('sssss');
+    
+    if (req.user.role == "HR") {
+        console.log(req.user.role);
+        
+        Attendance.find({ status: "Pending" }).then((attendance) => {
+            console.log(attendance);
+            
+            if (!attendance) {
+                res.status(200).send({
+                    data: null,
+                    code: 4000,
+                    error: "No regularization request found"
+                });
+            } else {
+                res.status(200).send({
+                    data: { data: attendance, message: "Request Completed Successfully!" },
+                    code: 2000,
+                    error: null
+                });
+            }
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        });
+    } else {
+        res.status(200).send({
+            data: null,
+            code: 4000,
+            error: "This request can only be made by HR"
+        });
+    }  
+})
+
+
+app.post('/attendance/regularize/reject/:id', authenticate, (req, res) => {
+    if (req.user.role == "HR") {
+        Attendance.findOne({ _id: req.params.id }).then((attendance) => {
+            if (!attendance) {
+                res.status(200).send({
+                    data: null,
+                    code: 4000,
+                    error: "No regularization request found to reject"
+                });
+            } else {
+                attendance.status = "Rejected";
+                attendance.save().then(() => {
+                    res.status(200).send({
+                        data: { data: null, message: "Regularization request rejected Successfully" },
+                        code: 2000,
+                        error: null
+                    });
+                }).catch((e) => {
+                    res.status(200).send({
+                        data: null,
+                        code: 4000,
+                        error: e.message
+                    });
+                })
+            }
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        });
+    } else {
+        res.status(200).send({
+            data: null,
+            code: 4000,
+            error: "This request can only be made by HR"
+        });
+    }
+});
+
+
+app.post('/attendance/regularize/approve/:id', authenticate, (req, res) => {
+    console.log('aaaaaaaaaaaaaaaaa');
+    
+    if (req.user.role == "HR") {
+        Attendance.findOne({ _id: req.params.id }).then((attendance) => {
+            if (!attendance) {
+                res.status(200).send({
+                    data: null,
+                    code: 4000,
+                    error: "No regularization request found to approve"
+                });
+            } else {
+                attendance.status = "Approved";
+                attendance.save().then(() => {
+                    res.status(200).send({
+                        data: { data: null, message: "Regularization request approved Successfully" },
+                        code: 2000,
+                        error: null
+                    });
+                }).catch((e) => {
+                    res.status(200).send({
+                        data: null,
+                        code: 4000,
+                        error: e.message
+                    });
+                })
+            }
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        });
+    } else {
+        res.status(200).send({
+            data: null,
+            code: 4000,
+            error: "This request can only be made by HR"
+        });
+    }
+});
+
+
+// LEAVE API
+
 app.post('/leave/apply', authenticate, (req, res) => {
     var body = _.pick(req.body, ['month', 'date', 'reason', 'leaveType']);
     Leave.findOne({ username: req.user.username, date: body.date }).then((leave) => {
@@ -335,6 +472,7 @@ app.post('/leave/apply', authenticate, (req, res) => {
             data.month = body.month;
             data.date = body.date;
             data.reason = body.reason;
+            data.status = "Pending"
             data.leaveType = body.leaveType;
             var lev = new Leave(data);
             lev.save().then((lev) => {
@@ -395,7 +533,7 @@ app.get('/leave/delete/:id', authenticate, (req, res) => {
 
 app.get('/leave/all', authenticate, (req, res) => {
     if (req.user.role == "HR") {
-        Leave.find().then((leave) => {
+        Leave.find({status: "Pending"}).then((leave) => {
             res.status(200).send({
                 data: {data: leave, message: "Request Completed Successfully"},
                 code: 2000,
@@ -440,13 +578,54 @@ app.post('/leave/approve/:id', authenticate, (req, res) => {
                 res.status(200).send({
                     data: null,
                     code: 4000,
-                    error: "No leave found to delete"
+                    error: "No leave found to approve"
                 });
             } else {
-                leave.approved = true;
+                leave.status = "Approved";
                 leave.save().then(() => {
                     res.status(200).send({
                         data: { data: null, message: "Leave approved Successfully" },
+                        code: 2000,
+                        error: null
+                    });
+                }).catch((e) => {
+                    res.status(200).send({
+                        data: null,
+                        code: 4000,
+                        error: e.message
+                    });
+                })
+            }
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        });
+    } else {
+        res.status(200).send({
+            data: null,
+            code: 4000,
+            error: "This request can only be made by HR"
+        });
+    }
+});
+
+app.post('/leave/reject/:id', authenticate, (req, res) => {
+    if (req.user.role == "HR") {
+        Leave.findOne({ _id: req.params.id }).then((leave) => {
+            if (!leave) {
+                res.status(200).send({
+                    data: null,
+                    code: 4000,
+                    error: "No leave found to reject"
+                });
+            } else {
+                leave.status = "Rejected";
+                leave.save().then(() => {
+                    res.status(200).send({
+                        data: { data: null, message: "Leave rejected Successfully" },
                         code: 2000,
                         error: null
                     });
