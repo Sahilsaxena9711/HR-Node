@@ -310,6 +310,32 @@ app.get('/attendance/username/:username/date/:date', authenticate, (req, res) =>
     }
 });
 
+app.get('/attendance/username/:username/month/:month', authenticate, (req, res) => {
+    if (req.user.role == "HR") {
+        var month = req.params.month;
+        var username = req.params.username
+        Attendance.find({ month, username, status: "Approved" }).then((attendance) => {
+            res.status(200).send({
+                data: {data: attendance, message: "Request Completed Successfully"},
+                code: 2000,
+                error: null
+            });
+        }).catch((e) => {
+            res.status(200).send({
+                data: null,
+                code: 4000,
+                error: e.message
+            });
+        });
+    } else {
+        res.status(200).send({
+            data: null,
+            code: 4000,
+            error: "This request can only be made by HR"
+        });
+    }
+});
+
 app.get('/attendance/date/:date', authenticate, (req, res) => {
     var date = req.params.date;
     var username = req.user.username
